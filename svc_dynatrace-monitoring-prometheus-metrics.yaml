@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynatrace-monitoring-prometheus-metrics
+  namespace: prometheus-monitoring-system
+  annotations:
+    metrics.dynatrace.com/scrape: 'true'
+    metrics.dynatrace.com/path: '/metrics'
+    metrics.dynatrace.com/port: '9100'
+    metrics.dynatrace.com/secure: 'false'
+    metrics.dynatrace.com/filter: |
+      {
+      "mode": "include",
+      "names": [
+          "etcd_server_has_leader",
+          "cluster_operator_conditions",
+          "etcd_disk_backend_commit_duration_seconds_bucket*",
+          "etcd_disk_wal_fsync_duration_seconds_bucket*",
+          "etcd_network_client_grpc_received*",
+          "mcd_state",
+          "node_timex_sync_status",
+          "node_timex_maxerror_seconds",
+          "crio_operations_errors_total",
+          "crio_operations_total",
+          "up",
+          "haproxy_backend_connections_total"
+          ]
+      }
+spec:
+  clusterIP: None
+  ports:
+  - name: dynatrace-monitoring-prometheus-metrics-port
+    port: 9100
+    protocol: TCP
+    targetPort: 9100
+  selector:
+    app: node-exporter
+
+
+#[required]metrics.dynatrace.com/scrape: "true" 告知 Dynatrace 來收集該 Pod 暴露的 Prometheus 指標
+#[required]metrics.dynatrace.com/port 設定要抓取指標的特定端口
+#[optional]metrics.dynatrace.com/path 設定自定義路徑(預設的指標抓取路徑為 /metrics)
+#[optional]metrics.dynatrace.com/secure，預設值為false，因為大多數exporter透過 HTTP 暴露其指標，如果使用HTTPS可設定為true
+#[optional]metrics.dynatrace.com/insecure_skip_verify，若使用自簽名憑證並且不想進行憑證驗證，可以設定true。但這個設定僅在 ActiveGate 部署在監控叢集內部且已配置監控本地 Kubernetes API 端點時有效。
+#更多請參考原廠文件https://docs.dynatrace.com/docs/observe/infrastructure-monitoring/container-platform-monitoring/kubernetes-monitoring/monitor-prometheus-metrics#monitor-prometheus-metrics
